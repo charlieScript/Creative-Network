@@ -1,0 +1,71 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Users {
+  user_id                     String                @id @default(uuid())
+  email                       String                @unique
+  username                    String                @unique
+  password                    String
+  bio                         String                @db.Text
+  image                       String
+  following                   Int
+  followers                   Int
+  resetPasswordToken          String?               @unique
+  resetPasswordExpirationDate String?
+  createdAt                   DateTime              @default(now())
+  updatedAt                   DateTime              @updatedAt
+  Articles                    Articles[]
+  Articles_Favourited         Articles_Favourited[]
+  Articles_Comments           Articles_Comments[]
+}
+
+model Articles {
+  article_id          String                @id @default(uuid())
+  title               String                @db.Text
+  description         String                @db.Text
+  body                String                @db.Text
+  tagList             String
+  tags                Tags                  @relation(fields: [tagList], references: [tag_name])
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  author              String
+  authored_by         Users                 @relation(fields: [author], references: [username])
+  favoritesCount      Int
+  Articles_Favourited Articles_Favourited[]
+  Articles_Comments   Articles_Comments[]
+}
+
+model Articles_Favourited {
+  id         Int      @id @default(autoincrement())
+  article_id String
+  article    Articles @relation(fields: [article_id], references: [article_id])
+  username   String
+  author     Users    @relation(fields: [username], references: [username])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Articles_Comments {
+  id         Int      @id @default(autoincrement())
+  article_id String
+  article    Articles @relation(fields: [article_id], references: [article_id])
+  username   String
+  author     Users    @relation(fields: [username], references: [username])
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Tags {
+  tags_id  String     @id @default(uuid())
+  tag_name String     @unique
+  Articles Articles[]
+}
