@@ -1,13 +1,14 @@
 import joi from 'joi';
 import bcrypt from '../helpers/bcrypt';
 import { signPayload } from '../helpers/jwt';
-import { createUser, findUser} from '../services/user.service'
+import { createUser, findUser, getUserByUsername , createArticle} from '../services/user.service';
 
 // Interface for expected response
 interface IHelperResponse {
   success: boolean;
   status: number;
   data?: { token: string; };
+  response?: {};
   error?: string;
   message?: string;
 }
@@ -17,11 +18,11 @@ export const signupController = async (email: string, password: string, bio: str
     email: joi.string().email().required(),
     password: joi.string().min(5),
     bio: joi.string().required(),
-    image: joi.string().uri().required(),
+    image: joi.string().required(),
     username: joi.string().required(),
   });
 
-  const validationResult = validationSchema.validate({ email, password, bio, image, username})
+  const validationResult = validationSchema.validate({ email, password, bio, image, username });
   if (validationResult.error) {
     return {
       success: false,
@@ -31,7 +32,8 @@ export const signupController = async (email: string, password: string, bio: str
   }
 
   // check for existing user
-  const existingUser = await findUser(username);
+  const existingUser = await findUser(email);
+
   if (existingUser) {
     return {
       success: false,
@@ -39,24 +41,24 @@ export const signupController = async (email: string, password: string, bio: str
       error: 'Invalid username and/or password.',
     };
   }
-  const hashPassword = await bcrypt.hash(password)
-  const user = await createUser(email, bio, image, hashPassword, username);
+  const hashPassword = await bcrypt.hash(password);
+  const user = await createUser(email, hashPassword, bio, username, image);
   return {
     success: true,
     status: 200,
     message: 'Account successfully created',
     data: { token: signPayload({ id: user.username }) },
   };
-}
+};
 
 
-export const loginController = async (username: string, password: string): Promise<IHelperResponse> => {
+export const loginController = async (email: string, password: string): Promise<IHelperResponse> => {
   const validationSchema = joi.object({
-    username: joi.string().required(),
+    email: joi.string().email().required(),
     password: joi.string().min(5),
   });
 
-  const validationResult = validationSchema.validate({ username, password });
+  const validationResult = validationSchema.validate({ email, password });
   if (validationResult.error) {
     return {
       success: false,
@@ -65,11 +67,14 @@ export const loginController = async (username: string, password: string): Promi
     };
   }
 
-  const user = await findUser(username);
+  const user = await findUser(email);
+
   if (!user) {
     return { success: false, status: 401, error: 'Incorrect username and/or password.' };
   }
+
   const passwordMatch = await bcrypt.compare(password, user.password);
+
   if (!passwordMatch) {
     return { success: false, status: 401, error: 'Incorrect username and/or password.' };
   }
@@ -79,5 +84,72 @@ export const loginController = async (username: string, password: string): Promi
     status: 200,
     message: 'Login successful',
     data: { token: signPayload({ id: user.username }) },
+  };
+};
+
+export const getUserController = async (username: string): Promise<IHelperResponse> => {
+  const validationSchema = joi.object({
+    username: joi.string().required(),
+  });
+
+  const validationResult = validationSchema.validate({ username });
+  if (validationResult.error) {
+    return {
+      success: false,
+      status: 400,
+      error: validationResult.error.message,
+    };
   }
-}
+
+  const user = await getUserByUsername(username);
+
+  if (!user) {
+    return { success: false, status: 404, error: 'User not found' };
+  }
+
+  return {
+    success: true,
+    status: 200,
+    message: 'User found',
+    response: { 
+      email: user.email,
+      bio: user.bio,
+      image: user.image
+     },
+  };
+};
+
+
+export const createArticleController = async (title: string, description: string, body: string, tagList: string, author: string): Promise<IHelperResponse> => {
+  const validationSchema = joi.object({
+    title: joi.string().required(),
+    description: joi.string().required(),
+    body: joi.string().required(),
+    tagList: joi.string().required(),
+    author: joi.string().required(),
+  });
+
+  const validationResult = validationSchema.validate({ title, description, body, tagList, author });
+  if (validationResult.error) {
+    return {
+      success: false,
+      status: 400,
+      error: validationResult.error.message,
+    };
+  }
+
+  const article = await createArticle(title, description, body, tagList, author);
+
+  if (!article) {
+    return { success: false, status: 404, error: 'User not found' };
+  }
+
+  return {
+    success: true,
+    status: 200,
+    message: 'Article created',
+    response: {
+      author: article.author
+    }
+  };
+};

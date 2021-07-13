@@ -34,7 +34,6 @@ model Articles {
   description         String                @db.Text
   body                String                @db.Text
   tagList             String
-  tags                Tags                  @relation(fields: [tagList], references: [tag_name])
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   author              String
@@ -64,8 +63,3 @@ model Articles_Comments {
   updatedAt  DateTime @updatedAt
 }
 
-model Tags {
-  tags_id  String     @id @default(uuid())
-  tag_name String     @unique
-  Articles Articles[]
-}

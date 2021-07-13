@@ -7,18 +7,40 @@ export const createUser = async (email: string, password: string, bio: string, u
       email: email,
       password: password,
       bio: bio,
-      followers: 0,
-      following: 0,
       username: username,
       image: image,
+      followers: 0,
+      following: 0
     }
-  })
+  });
 };
 
-export const findUser = async (username: string) => {
+export const findUser = async (email: string) => {
+  return await prisma.users.findUnique({
+    where: {
+      email: email
+    }
+  });
+};
+
+export const getUserByUsername = async (username: string) => {
   return await prisma.users.findUnique({
     where: {
       username: username
     }
+  });
+}
+
+
+export const createArticle = async (title: string, description: string, body: string, tagList: string, author: string) => {
+  return await prisma.articles.create({
+    data: {
+      title,
+      body,
+      description,
+      favoritesCount: 0,
+      author,
+      tagList,
+    }
   })
-};
+}

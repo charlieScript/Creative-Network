@@ -4,8 +4,8 @@ const hash = async (data: string): Promise<string> => {
   return bcryptjs.hash(data, 10);
 };
 
-const compare = async (data: string, hash: string): Promise<boolean> => {
-  return bcryptjs.compare(data, hash);
+const compare = async (hash: string, data: string): Promise<boolean> => {
+  return bcryptjs.compare(hash, data);
 };
 
 const bcrypt = {

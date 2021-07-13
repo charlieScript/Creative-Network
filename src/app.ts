@@ -2,6 +2,7 @@ import express from 'express';
 import mongoose from 'mongoose';
 import path from 'path';
 import logger from './utils/logger';
+import dotenv from 'dotenv'
 // import { DATABASE_URL } from './utils/secrets';
 // import logger from './utils/logger';
 
@@ -11,6 +12,8 @@ import logger from './utils/logger';
 import userRoutes from './routes/user.routes';
 // Create Express server
 const app: express.Express = express();
+
+dotenv.config()
 
 app.set('views', path.join(__dirname, '../views'));
 app.set('view engine', 'ejs');
