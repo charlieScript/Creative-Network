@@ -44,3 +44,34 @@ export const createArticle = async (title: string, description: string, body: st
     }
   })
 }
+
+export const getAllArticle = async () => {
+  return await prisma.articles.findMany({
+    orderBy: {
+      createdAt: 'desc'
+    }
+  })
+}
+
+export const followUser = async (follower: string, followee: string) => {
+  // check if the followee exists
+  // disallow follow yourself
+  if (follower === followee) {
+    return 
+  }
+
+  const user = await prisma.users.findFirst({
+    where: {
+      username: followee
+    }
+  })
+
+  if (user) {
+    return await prisma.follow.create({
+      data: {
+        follower: follower,
+        followee: user?.username
+      }
+    })
+  }
+}

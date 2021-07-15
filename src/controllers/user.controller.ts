@@ -1,7 +1,7 @@
 import joi from 'joi';
 import bcrypt from '../helpers/bcrypt';
 import { signPayload } from '../helpers/jwt';
-import { createUser, findUser, getUserByUsername , createArticle} from '../services/user.service';
+import { createUser, findUser, getUserByUsername, createArticle, getAllArticle, followUser } from '../services/user.service';
 
 // Interface for expected response
 interface IHelperResponse {
@@ -12,6 +12,7 @@ interface IHelperResponse {
   error?: string;
   message?: string;
 }
+
 
 export const signupController = async (email: string, password: string, bio: string, username: string, image: string): Promise<IHelperResponse> => {
   const validationSchema = joi.object({
@@ -111,11 +112,11 @@ export const getUserController = async (username: string): Promise<IHelperRespon
     success: true,
     status: 200,
     message: 'User found',
-    response: { 
+    response: {
       email: user.email,
       bio: user.bio,
       image: user.image
-     },
+    },
   };
 };
 
@@ -151,5 +152,54 @@ export const createArticleController = async (title: string, description: string
     response: {
       author: article.author
     }
+  };
+};
+
+
+export const getAllArticleController = async (): Promise<IHelperResponse> => {
+
+  const article = await getAllArticle();
+
+  if (article.length !== 0 && !article) {
+    return { success: false, status: 404, error: 'No article was found' };
+  }
+
+  return {
+    success: true,
+    status: 200,
+    message: 'Articles returned',
+    response: {
+      "articles": article,
+      "articlesCount": article.length
+    },
+  };
+};
+
+
+export const followController = async (follower: string, followee: string): Promise<IHelperResponse> => {
+  const validationSchema = joi.object({
+    follower: joi.string().required(),
+    followee: joi.string().required(),
+  });
+
+  const validationResult = validationSchema.validate({ follower, followee });
+  if (validationResult.error) {
+    return {
+      success: false,
+      status: 400,
+      error: validationResult.error.message,
+    };
+  }
+
+  const user = await followUser(follower, followee);
+
+  if (!user) {
+    return { success: false, status: 404, error: 'User not found' };
+  }
+
+  return {
+    success: true,
+    status: 200,
+    message: `${user.follower} followed ${user.followee}`
   };
 };

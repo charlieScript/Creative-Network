@@ -26,6 +26,7 @@ model Users {
   Articles                    Articles[]
   Articles_Favourited         Articles_Favourited[]
   Articles_Comments           Articles_Comments[]
+  Follow                      Follow[]
 }
 
 model Articles {
@@ -63,3 +64,12 @@ model Articles_Comments {
   updatedAt  DateTime @updatedAt
 }
 
+model Follow {
+  id        Int      @id @default(autoincrement())
+  @@unique([follower, followee])
+  follower  String
+  followee  String?
+  user      Users    @relation(fields: [follower], references: [username])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
